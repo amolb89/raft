@@ -31,7 +31,7 @@ type Serv struct {
 	noOfPeers int
 }
 
-func (s *Serv) Set(id int, configPath string) {
+func (s *Serv) Set(id int, configPath string, exit <-chan int) {
 	cfig := new(Config)
 	//Load configuration from config file
 	LoadConfig(configPath, cfig)
@@ -56,8 +56,8 @@ func (s *Serv) Set(id int, configPath string) {
 	s.peers = Peers
 
 	//Start receiving and sending goroutines
-	go s.Proc_recv()
-	go s.Proc_send()
+	go s.Proc_recv(exit)
+	go s.Proc_send(exit)
 }
 
 func (s *Serv) NoOfPeers() int {
@@ -80,41 +80,54 @@ func (s *Serv) Inbox() chan *Envelope {
 	return s.inbox
 }
 
-func (s *Serv) Proc_send() {
-	for msg := range s.Outbox() {
-		if msg.Pid == -1 {
-			for id, _ := range s.Peers() {
-				if id != s.Pid() {
-					requester, _ := zmq.NewSocket(zmq.PUSH)
-					servAddr := "tcp://" + s.Peers()[id]
-					requester.Connect(servAddr)
-					msg.Pid = s.Pid()
-					msgBytes, _ := json.Marshal(msg)
-					requester.SendBytes(msgBytes, 0)
-					requester.Close()
+func (s *Serv) Proc_send(exit <-chan int) {
+L:
+	for {
+		select {
+		case <-exit:
+			break L
+		default:
+			msg := <-s.Outbox()
+			if msg.Pid == -1 {
+				for id, _ := range s.Peers() {
+					if id != s.Pid() {
+						requester, _ := zmq.NewSocket(zmq.PUSH)
+						servAddr := "tcp://" + s.Peers()[id]
+						requester.Connect(servAddr)
+						msg.Pid = s.Pid()
+						msgBytes, _ := json.Marshal(msg)
+						requester.SendBytes(msgBytes, 0)
+						requester.Close()
+					}
 				}
+			} else {
+				requester, _ := zmq.NewSocket(zmq.PUSH)
+				servAddr := "tcp://" + s.Peers()[msg.Pid]
+				requester.Connect(servAddr)
+				msg.Pid = s.Pid()
+				msgBytes, _ := json.Marshal(msg)
+				requester.SendBytes(msgBytes, 0)
+				requester.Close()
 			}
-		} else {
-			requester, _ := zmq.NewSocket(zmq.PUSH)
-			servAddr := "tcp://" + s.Peers()[msg.Pid]
-			requester.Connect(servAddr)
-			msg.Pid = s.Pid()
-			msgBytes, _ := json.Marshal(msg)
-			requester.SendBytes(msgBytes, 0)
-			requester.Close()
 		}
 	}
 }
 
-func (s *Serv) Proc_recv() {
+func (s *Serv) Proc_recv(exit <-chan int) {
 	responder, _ := zmq.NewSocket(zmq.PULL)
 	defer responder.Close()
 	recAddr := "tcp://" + s.Peers()[s.Pid()]
 	responder.Bind(recAddr)
+L:
 	for {
-		msgBytes, _ := responder.RecvBytes(0)
-		var msg Envelope
-		json.Unmarshal(msgBytes, &msg)
-		s.Inbox() <- &msg
+		select {
+		case <-exit:
+			break L
+		default:
+			msgBytes, _ := responder.RecvBytes(0)
+			var msg Envelope
+			json.Unmarshal(msgBytes, &msg)
+			s.Inbox() <- &msg
+		}
 	}
 }
