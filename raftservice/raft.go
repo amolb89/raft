@@ -41,7 +41,7 @@ func (r *RaftImpl) CurrLeader() chan int {
 	return r.currLeader
 }
 
-func (r *RaftImpl) Configure(servId int, configPath string, currTimeout int, currTerm int, leaderchan chan int, prob float64, delay int) {
+func (r *RaftImpl) Configure(servId int, configPath string, currTimeout int, currTerm int, leaderchan chan int, prob float64, delay int, exit <-chan int) {
 	logPath := "/home/amol/Desktop/raft/src/github.com/amolb89/raft/logs/log"
 	file, _ := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
@@ -51,7 +51,7 @@ func (r *RaftImpl) Configure(servId int, configPath string, currTimeout int, cur
 	r.isLeader = false
 	r.timeout = currTimeout
 	r.server = new(clust.MockServer)
-	r.server.Set(servId, configPath, prob, delay)
+	r.server.Set(servId, configPath, prob, delay, exit)
 	r.TRACE.Println("Configured Server ", r.Pid(), " with timeout ", r.timeout)
 	r.currLeader = leaderchan
 	go r.follower()
@@ -143,15 +143,13 @@ func (r *RaftImpl) leader() {
 	r.isLeader = true
 	r.CurrLeader() <- r.Pid()
 	for {
-		select {
-		case <-time.After(5):
-			r.TRACE.Println("Server ", r.Pid(), " with term ", r.Term(), " is sending AppendEntries message")
-			msg := new(clust.Envelope)
-			msg.Pid = -1
-			msg.TermId = r.Term()
-			msg.Msg = "AppendEntries"
-			r.server.Outbox() <- msg
-			r.term = r.Term() + 1
-		}
+		r.TRACE.Println("Server ", r.Pid(), " with term ", r.Term(), " is sending AppendEntries message")
+		msg := new(clust.Envelope)
+		msg.Pid = -1
+		msg.TermId = r.Term()
+		msg.Msg = "AppendEntries"
+		r.server.Outbox() <- msg
+		r.term = r.Term() + 1
+		time.Sleep(5 * time.Second)
 	}
 }
