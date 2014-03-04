@@ -8,8 +8,12 @@ This library is implementation of raft consensus algorithm in golang. It can be 
 Usage
 
 go build github.com/amolb89/raft/clust
+
 go install github.com/amolb89/raft/clust
+
 go build github.com/amolb89/raft/raftservice
+
 go install github.com/amolb89/raft/raftservice
+
 go test github.com/amolb89/raft
 
