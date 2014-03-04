@@ -25,9 +25,9 @@ func (s *MockServer) NoOfPeers() int {
 	return s.server.NoOfPeers()
 }
 
-func (s *MockServer) Set(id int, configPath string, DropProb float64, MaxDelay int) {
+func (s *MockServer) Set(id int, configPath string, DropProb float64, MaxDelay int, exit <-chan int) {
 	s.server = new(Serv)
-	s.server.Set(id, configPath)
+	s.server.Set(id, configPath, exit)
 	s.dropProb = DropProb
 	s.maxDelay = MaxDelay
 
@@ -35,62 +35,72 @@ func (s *MockServer) Set(id int, configPath string, DropProb float64, MaxDelay i
 	s.outbox = make(chan *Envelope, 100)
 	s.inbox = make(chan *Envelope, 100)
 
-	go s.Proc_send()
-	go s.Proc_recv()
+	go s.Proc_send(exit)
+	go s.Proc_recv(exit)
 }
 
-func (s *MockServer) Proc_send() {
+func (s *MockServer) Proc_send(exit <-chan int) {
+L:
 	for {
-		msg := <-s.Outbox()
-		if msg.Pid == -1 {
-			for id, _ := range s.server.Peers() {
-				if id != s.server.Pid() {
-					p := Random(int(s.dropProb*100), 100)
-					if p < int(s.dropProb*100) {
-						//Drop the packet
-						fmt.Println("Outgoing packet dropped at server ", s.server.Pid())
-					} else {
-						msgNew := new(Envelope)
-						msgNew.Pid = id
-						msgNew.Msg = msg.Msg
-						msgNew.TermId = msg.TermId
-						//Delay
-						delay := Random(0, s.maxDelay)
-						fmt.Println("Outgoing packet delayed by ", delay, " at server ", s.server.Pid())
-						time.Sleep(time.Duration(delay) * time.Second)
-						s.server.Outbox() <- msgNew
+		select {
+		case <-exit:
+			break L
+		default:
+			msg := <-s.Outbox()
+			if msg.Pid == -1 {
+				for id, _ := range s.server.Peers() {
+					if id != s.server.Pid() {
+						p := Random(int(s.dropProb*100), 100)
+						if p < int(s.dropProb*100) {
+							//Drop the packet
+							fmt.Println("Outgoing packet dropped at server ", s.server.Pid())
+						} else {
+							msgNew := new(Envelope)
+							msgNew.Pid = id
+							msgNew.Msg = msg.Msg
+							msgNew.TermId = msg.TermId
+							//Delay
+							delay := Random(0, s.maxDelay)
+							fmt.Println("Outgoing packet delayed by ", delay, " at server ", s.server.Pid())
+							time.Sleep(time.Duration(delay) * time.Second)
+							s.server.Outbox() <- msgNew
+						}
 					}
 				}
+			} else {
+				p := Random(int(s.dropProb*100), 100)
+				if p < int(s.dropProb*100) {
+					//Drop the packet
+					fmt.Println("Outgoing packet dropped at server ", s.server.Pid())
+				} else {
+					delay := Random(0, s.maxDelay)
+					fmt.Println("Outgoing packet delayed by ", delay, " at server ", s.server.Pid())
+					time.Sleep(time.Duration(delay) * time.Second)
+					s.server.Outbox() <- msg
+				}
 			}
-		} else {
+		}
+	}
+}
+
+func (s *MockServer) Proc_recv(exit <-chan int) {
+L:
+	for {
+		select {
+		case <-exit:
+			break L
+		default:
+			msg := <-s.server.Inbox()
 			p := Random(int(s.dropProb*100), 100)
 			if p < int(s.dropProb*100) {
 				//Drop the packet
-				fmt.Println("Outgoing packet dropped at server ", s.server.Pid())
+				fmt.Println("Incoming packet dropped at server ", s.server.Pid())
 			} else {
 				delay := Random(0, s.maxDelay)
-				fmt.Println("Outgoing packet delayed by ", delay, " at server ", s.server.Pid())
+				fmt.Println("Incoming packet delayed by ", delay, " at server ", s.server.Pid())
 				time.Sleep(time.Duration(delay) * time.Second)
-				s.server.Outbox() <- msg
+				s.Inbox() <- msg
 			}
 		}
 	}
-}
-
-func (s *MockServer) Proc_recv() {
-	for {
-
-		msg := <-s.server.Inbox()
-		p := Random(int(s.dropProb*100), 100)
-		if p < int(s.dropProb*100) {
-			//Drop the packet
-			fmt.Println("Incoming packet dropped at server ", s.server.Pid())
-		} else {
-			delay := Random(0, s.maxDelay)
-			fmt.Println("Incoming packet delayed by ", delay, " at server ", s.server.Pid())
-			time.Sleep(time.Duration(delay) * time.Second)
-			s.Inbox() <- msg
-		}
-	}
-
 }
