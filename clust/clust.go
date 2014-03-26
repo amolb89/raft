@@ -10,10 +10,32 @@ const (
 	BROADCAST = -1
 )
 
+// Message type can be 1-RequestVote 2-Appendentries 3-Ok
 type Envelope struct {
-	Pid    int
-	Msg    string
-	TermId int
+	Pid     int
+	MsgType int
+	TermId  int
+	Msg     *AppendEntry
+	Resp    *Response
+}
+
+type Response struct {
+	MatchIndex int
+	//MatchTerm int
+	Success bool
+}
+
+type LogItem struct {
+	//Index int
+	Term int
+	Data string
+}
+
+type AppendEntry struct {
+	PrevLogIndex int
+	PrevLogTerm  int
+	LogItm       *LogItem
+	LeaderCommit int //Leader's commit Index
 }
 
 type Server interface {
