@@ -25,6 +25,10 @@ func (s *MockServer) NoOfPeers() int {
 	return s.server.NoOfPeers()
 }
 
+func (s *MockServer) Peers() map[int]string {
+	return s.server.Peers()
+}
+
 func (s *MockServer) Set(id int, configPath string, DropProb float64, MaxDelay int, exit <-chan int) {
 	s.server = new(Serv)
 	s.server.Set(id, configPath, exit)
@@ -58,7 +62,9 @@ L:
 							msgNew := new(Envelope)
 							msgNew.Pid = id
 							msgNew.Msg = msg.Msg
+							msgNew.Resp = msg.Resp
 							msgNew.TermId = msg.TermId
+							msgNew.MsgType = msg.MsgType
 							//Delay
 							delay := Random(0, s.maxDelay)
 							fmt.Println("Outgoing packet delayed by ", delay, " at server ", s.server.Pid())
