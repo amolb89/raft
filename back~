@@ -1,0 +1,60 @@
+	var index int32	
+	index = 1
+	l1 := new(clust.LogItem)
+	l1.Term = 1
+	cmd := new(clust.Command)
+	cmd.Type = PUT
+	cmd.Key ="MH12"
+	cmd.Value = "Pune"
+	l1.Data = cmd
+	logItemBytes, _ := json.Marshal(l1)
+	indexBytes, _ := json.Marshal(index)
+	db.Put(wo,indexBytes,logItemBytes)
+
+	index = 2
+	l2 := new(clust.LogItem)
+	l2.Term = 1
+	cmd = new(clust.Command)
+	cmd.Type = PUT
+	cmd.Key ="MH01"
+	cmd.Value="South Mumbai"
+	l2.Data = cmd
+	logItemBytes, _ = json.Marshal(l2)
+	indexBytes, _ = json.Marshal(index)
+	db.Put(wo,indexBytes,logItemBytes)
+
+	index = 3
+	l3 := new(clust.LogItem)
+	l3.Term = 1
+	cmd = new(clust.Command)
+	cmd.Type = PUT
+	cmd.Key ="MH05"
+	cmd.Value="Kalyan"
+	l3.Data = cmd
+	logItemBytes, _ = json.Marshal(l3)
+	indexBytes, _ = json.Marshal(index)
+	db.Put(wo,indexBytes,logItemBytes)
+
+	index = 5
+	l4 := new(clust.LogItem)
+	l4.Term = 4
+	cmd = new(clust.Command)
+	cmd.Type = PUT
+	cmd.Key ="MH09"
+	cmd.Value="Kolhapur"
+	l4.Data = cmd
+	logItemBytes, _ = json.Marshal(l4)
+	indexBytes, _ = json.Marshal(index)
+	db.Put(wo,indexBytes,logItemBytes)
+
+	index = 6
+	l5 := new(clust.LogItem)
+	l5.Term = 4
+	cmd = new(clust.Command)
+	cmd.Type = PUT
+	cmd.Key ="MH10"
+	cmd.Value="Sangli"
+	l5.Data = cmd
+	logItemBytes, _ = json.Marshal(l5)
+	indexBytes, _ = json.Marshal(index)
+	db.Put(wo,indexBytes,logItemBytes)

@@ -12,13 +12,13 @@ const (
 
 // Message type can be 1-RequestVote 2-Appendentries 3-Ok
 type Envelope struct {
-	Pid          int32
-	MsgType      int
-	TermId       int32
+	Pid     int32
+	MsgType int
+	TermId  int32
 	LeaderCommit int
-	Msg          *AppendEntry
-	Resp         *Response
-	Cmd          *Command
+	Msg     *AppendEntry
+	Resp    *Response
+	Cmd 	*Command
 }
 
 type Response struct {
@@ -28,8 +28,8 @@ type Response struct {
 }
 
 type Command struct {
-	Type  int
-	Key   string
+	Type int
+	Key string
 	Value string
 }
 

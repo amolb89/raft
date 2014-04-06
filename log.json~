@@ -1,0 +1,14 @@
+{	
+	"LogEntries" : [
+		{
+			"Index" : 1,
+			"Term" : 1 ,
+			"Data" : "cp"
+		},
+		{
+			"Index" : 2,
+			"Term" : 1 ,
+			"Data" : "move"
+		}
+	]
+}
