@@ -13,9 +13,6 @@ import (
 	"time"
 )
 
-const (
-	COMMAND = 5
-)
 
 func getWorkingDir() string{
     	path := os.Getenv("GOPATH")

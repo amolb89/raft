@@ -7,10 +7,17 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+<<<<<<< HEAD
+	"sort"
 	"strconv"
 	"sync"
-	"sort"
 	"time"
+=======
+	"strconv"
+	"time"
+	"sync"
+	"sort"
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 )
 
 const (
@@ -24,12 +31,21 @@ const (
 )
 const (
 	RESPONSE_APPENDENTRIES = 4
+<<<<<<< HEAD
+	COMMAND                = 5
+)
+
+const (
+	GET    = 1
+	PUT    = 2
+=======
 	COMMAND = 5
 )
 
 const (
 	GET = 1
 	PUT = 2
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	DELETE = 3
 )
 
@@ -48,6 +64,15 @@ type RaftImpl struct {
 	timeout     int
 	noOfVotes   int
 	logFile     string
+<<<<<<< HEAD
+	logDB       *levigo.DB
+	database    string
+	termFile    string
+	commitIndex int
+	db          *levigo.DB
+	ro          *levigo.ReadOptions
+	wo          *levigo.WriteOptions
+=======
 	logDB	    *levigo.DB
 	database    string
 	termFile    string
@@ -55,6 +80,7 @@ type RaftImpl struct {
 	db	    *levigo.DB
 	ro 	    *levigo.ReadOptions
 	wo 	    *levigo.WriteOptions
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	lastApplied int //index of the highest log entry applied to the state machine
 	log         []*clust.LogItem
 	LastIndex   int
@@ -72,14 +98,17 @@ type Log struct {
 	LogEntries []*clust.LogItem
 }
 
-func (r *RaftImpl) KvStore()  *levigo.DB {
+<<<<<<< HEAD
+func (r *RaftImpl) KvStore() *levigo.DB {
 	return r.db
 }
 
-func (r *RaftImpl) Ro()  *levigo.ReadOptions {
+func (r *RaftImpl) Ro() *levigo.ReadOptions {
 	return r.ro
 }
 
+=======
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 func (r *RaftImpl) Server() *clust.MockServer {
 	return r.server
 }
@@ -110,13 +139,26 @@ func (r *RaftImpl) CurrLeader() chan int32 {
 
 func (r *RaftImpl) LoadLog() {
 	opts := levigo.NewOptions()
+<<<<<<< HEAD
+	opts.SetCache(levigo.NewLRUCache(3 << 30))
+=======
 	opts.SetCache(levigo.NewLRUCache(3<<30))
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	opts.SetCreateIfMissing(true)
 	var err error
 	r.logDB, err = levigo.Open(r.logFile, opts)
 	if err != nil {
 		r.TRACE.Println(err)
 	}
+<<<<<<< HEAD
+
+	it := r.logDB.NewIterator(r.ro)
+	defer it.Close()
+
+	it.SeekToFirst()
+	var index int32
+	for it = it; it.Valid(); it.Next() {
+=======
 	
 	it := r.logDB.NewIterator(r.ro)
 	defer it.Close()
@@ -124,10 +166,21 @@ func (r *RaftImpl) LoadLog() {
 	it.SeekToFirst()
 	var index int32
 	for it=it; it.Valid(); it.Next() {
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 		l := new(clust.LogItem)
 		err := json.Unmarshal(it.Value(), l)
 		if err != nil {
 			r.TRACE.Println(err)
+<<<<<<< HEAD
+		}
+		err = json.Unmarshal(it.Key(), &index)
+		if err != nil {
+			r.TRACE.Println(err)
+		}
+		if int(index) <= cap(r.log) && int(index) > len(r.log) {
+			r.log = r.log[:index]
+			r.log[index-1] = l
+=======
 		} 
 		err = json.Unmarshal(it.Key(), &index)
 		if err != nil {
@@ -136,6 +189,7 @@ func (r *RaftImpl) LoadLog() {
 		if int(index) <= cap(r.log) && int(index) > len(r.log) {
 			r.log = r.log[:index]
 			r.log[index-1]  = l
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 		} else if int(index) > cap(r.log) {
 			t := make([]*clust.LogItem, len(r.log), index)
 			copy(t, r.log)
@@ -150,6 +204,15 @@ func (r *RaftImpl) LoadLog() {
 func (r *RaftImpl) changeTerm(newTerm int32) {
 	termBytes, err := json.Marshal(newTerm)
 	if err != nil {
+<<<<<<< HEAD
+		r.TRACE.Println("Error while changing term ", newTerm)
+	}
+	err = ioutil.WriteFile(r.termFile, termBytes, 0644)
+	if err != nil {
+		r.TRACE.Println("Error in updating term")
+	} else {
+		r.term = newTerm
+=======
 		r.TRACE.Println("Error while changing term ",newTerm)
 	}
 	err = ioutil.WriteFile(r.termFile, termBytes, 0644)
@@ -157,17 +220,27 @@ func (r *RaftImpl) changeTerm(newTerm int32) {
 		r.TRACE.Println("Error in updating term")	
 	} else {
 		 r.term = newTerm
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	}
 }
 
 func (r *RaftImpl) LoadTerm() {
 	fileBytes, _ := ioutil.ReadFile(r.termFile)
+<<<<<<< HEAD
+	json.Unmarshal(fileBytes, &r.term)
+	r.TRACE.Println("Term for server ", r.Pid(), " is: ", r.Term())
+}
+
+func (r *RaftImpl) AddToLog(logItem *clust.LogItem, index int) {
+	if r.LastIndex+1 == index {
+=======
 	json.Unmarshal(fileBytes, &r.term)	
 	r.TRACE.Println("Term for server ",r.Pid()," is: ",r.Term())
 }
 
 func (r *RaftImpl) AddToLog(logItem *clust.LogItem, index int) {
 	if r.LastIndex + 1 == index {
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 		r.AppendLogItem(logItem)
 	} else {
 		r.log = r.log[:index]
@@ -178,7 +251,11 @@ func (r *RaftImpl) AddToLog(logItem *clust.LogItem, index int) {
 }
 
 func (r *RaftImpl) RemoveNextEntries(index int32) {
+<<<<<<< HEAD
+	r.TRACE.Println("RemoveNextEntries@", r.Pid(), " start Index is ", (index + 1))
+=======
 	r.TRACE.Println("RemoveNextEntries@",r.Pid()," start Index is ",(index + 1))
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	it := r.logDB.NewIterator(r.ro)
 	defer it.Close()
 	var start int32
@@ -186,9 +263,15 @@ func (r *RaftImpl) RemoveNextEntries(index int32) {
 	indexBytes, _ := json.Marshal(start)
 	it.Seek(indexBytes)
 	if it.Valid() {
+<<<<<<< HEAD
+		for it = it; it.Valid(); it.Seek(indexBytes) {
+			r.TRACE.Println("removing ", start, " from log of server ", r.Pid())
+			err := r.logDB.Delete(r.wo, indexBytes)
+=======
 		for it=it; it.Valid(); it.Seek(indexBytes) {
 			r.TRACE.Println("removing ",start," from log of server ",r.Pid())
 			err := r.logDB.Delete(r.wo,indexBytes)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 			if err != nil {
 				r.TRACE.Println(err)
 			}
@@ -202,11 +285,18 @@ func (r *RaftImpl) RemoveNextEntries(index int32) {
 
 func (r *RaftImpl) AppendLogItem(logItem *clust.LogItem) {
 	//Add to memory log
-	r.TRACE.Println("logitem ",logItem," Appended @",r.Pid())
+<<<<<<< HEAD
+	r.TRACE.Println("logitem ", logItem, " Appended @", r.Pid())
+	r.log = append(r.log, logItem)
+	logBytes, _ := json.Marshal(logItem)
+	indexBytes, _ := json.Marshal(len(r.log))
+	r.logDB.Put(r.wo, indexBytes, logBytes)
+=======
 	r.log = append(r.log, logItem)
 	logBytes, _ := json.Marshal(logItem)
 	indexBytes, _ := json.Marshal(len(r.log))
 	r.logDB.Put(r.wo,indexBytes,logBytes)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 }
 
 func (r *RaftImpl) SendHeartBeats() {
@@ -240,6 +330,20 @@ func (r *RaftImpl) Configure(servId int32, configPath string, currTimeout int, l
 	r.database = "/home/amol/Desktop/raft/src/github.com/amolb89/raft/db@" + strconv.Itoa(int(r.Pid()))
 	r.termFile = "/home/amol/Desktop/raft/src/github.com/amolb89/raft/term@" + strconv.Itoa(int(r.Pid()))
 	r.ro = levigo.NewReadOptions()
+<<<<<<< HEAD
+	r.wo = levigo.NewWriteOptions()
+	r.log = make([]*clust.LogItem, 0, 15)
+	r.LoadLog()
+	for i := range r.log {
+		if r.log[i].Data.Type == PUT {
+			r.TRACE.Println("log@", r.Pid(), " : Index :", i, " Term :", r.log[i].Term, " Command : PUT(", r.log[i].Data.Key, ",", r.log[i].Data.Value, ")")
+		} else if r.log[i].Data.Type == DELETE {
+			r.TRACE.Println("log@", r.Pid(), " : Index :", i, " Term :", r.log[i].Term, " Command : DELETE(", r.log[i].Data.Key, ")")
+		}
+	}
+	r.LastIndex = len(r.log) - 1
+	r.timer = time.NewTimer(time.Duration(r.timeout) * time.Millisecond)
+=======
 	r.wo = levigo.NewWriteOptions()	
 	r.log = make([]*clust.LogItem,0,15)
 	r.LoadLog()
@@ -251,7 +355,8 @@ func (r *RaftImpl) Configure(servId int32, configPath string, currTimeout int, l
 		}
 	}
 	r.LastIndex = len(r.log) - 1
-	r.timer = time.NewTimer(time.Duration(r.timeout) * time.Millisecond)
+	r.timer = time.NewTimer(time.Duration(r.timeout) * time.Second)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	r.commitIndex = -1
 	r.lastApplied = -1
 	//tempTimer := time.NewTimer(time.Second * 2)
@@ -262,7 +367,11 @@ func (r *RaftImpl) Configure(servId int32, configPath string, currTimeout int, l
 	r.inbox = make(chan *clust.Command, 100)
 
 	opts := levigo.NewOptions()
+<<<<<<< HEAD
+	opts.SetCache(levigo.NewLRUCache(3 << 30))
+=======
 	opts.SetCache(levigo.NewLRUCache(3<<30))
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	opts.SetCreateIfMissing(true)
 	r.db, _ = levigo.Open(r.database, opts)
 	r.LoadTerm()
@@ -271,7 +380,10 @@ func (r *RaftImpl) Configure(servId int32, configPath string, currTimeout int, l
 	go r.follower()
 }
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 func (r *RaftImpl) follower() {
 	var mutex = &sync.Mutex{}
 	r.TRACE.Println("Server ", r.Pid(), " is in follower state with timeout :", r.timeout)
@@ -283,13 +395,19 @@ func (r *RaftImpl) follower() {
 			if msg.MsgType == COMMAND {
 				if r.leaderPid == -1 {
 					r.TRACE.Println("Leader not yet elected")
+<<<<<<< HEAD
 					r.server.Inbox() <- msg
 				} else {
-					r.TRACE.Println("New command received @",r.Pid())
+					r.TRACE.Println("New command received @", r.Pid())
+=======
+					r.server.Outbox() <- msg
+				} else {
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 					cmdMsg := new(clust.Envelope)
 					cmdMsg.Pid = r.leaderPid
 					cmdMsg.MsgType = COMMAND
 					cmdMsg.Cmd = msg.Cmd
+<<<<<<< HEAD
 					r.server.Outbox() <- cmdMsg
 				}
 			} else if msg.MsgType == REQUESTVOTE && msg.TermId > r.term {
@@ -308,11 +426,30 @@ func (r *RaftImpl) follower() {
 					r.changeTerm(msg.TermId)
 					r.TRACE.Println("Server ", r.Pid(), " with term ", r.Term(), " rejected RequestVote from server ", msg.Pid, "with term ", msg.TermId)
 				}
+=======
+					r.server.Outbox() <- msg
+				}
+			} else if msg.MsgType == REQUESTVOTE && msg.TermId > r.term {
+				//Send OK
+				r.TRACE.Println("Server ", r.Pid(), " with term ", r.Term(), " received RequestVote from server ", msg.Pid, " with term ", msg.TermId)
+				r.TRACE.Println("Server ", r.Pid(), " sending Ok message to server ", msg.Pid)
+				r.changeTerm(msg.TermId)
+				okMsg := new(clust.Envelope)
+				okMsg.Pid = msg.Pid
+				okMsg.TermId = r.Term()
+				okMsg.MsgType = OK
+				r.server.Outbox() <- okMsg
+				//1 ok in one term
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 			} else if msg.MsgType == REQUESTVOTE && msg.TermId <= r.term {
 				r.TRACE.Println("Server ", r.Pid(), " with term ", r.Term(), " rejected RequestVote from server ", msg.Pid, "with term ", msg.TermId)
 				//Reject the request -> stale term
 			} else if msg.MsgType == APEENDENTRIES && r.term <= msg.TermId {
+<<<<<<< HEAD
+				r.TRACE.Println("Server ", r.Pid(), " with term ", r.Term(), " received AppendEntries from ", msg.Pid, " with term ", msg.TermId, " msg is ", msg.Msg, " Complete msg is ", msg, " Leadercommit is ", msg.LeaderCommit)
+=======
 				r.TRACE.Println("Server ", r.Pid(), " with term ", r.Term(), " received AppendEntries from ", msg.Pid, " with term ", msg.TermId, " msg is ", msg.Msg, " Complete msg is ", msg," Leadercommit is ",msg.LeaderCommit)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 				r.commitIndex = msg.LeaderCommit
 				r.leaderPid = msg.Pid
 				if msg.Msg != nil {
@@ -328,6 +465,19 @@ func (r *RaftImpl) follower() {
 						response.Success = true
 						//Append Entry
 						if appendEntry.LogItm != nil {
+<<<<<<< HEAD
+							r.TRACE.Println("Server ", r.Pid(), " added log entry with index 0 and term ", appendEntry.LogItm.Term, " and Command type : ", appendEntry.LogItm.Data.Type, " Key : ", appendEntry.LogItm.Data.Key)
+							r.AddToLog(appendEntry.LogItm, 0)
+							r.LastIndex = 0
+							if msg.LeaderCommit >= r.LastIndex && r.lastApplied == -1 {
+								// Apply commands from log to the state machine
+								r.TRACE.Println("Apply commands from log to the state machine")
+								if r.log[0].Data.Type == PUT {
+									err := r.db.Put(r.wo, []byte(r.log[0].Data.Key), []byte(r.log[0].Data.Value))
+									if err == nil {
+										val, _ := r.db.Get(r.ro, []byte(r.log[0].Data.Key))
+										r.TRACE.Println("Put successful	of the key ", r.log[0].Data.Key, " and inserted value is : ", string(val))
+=======
 							r.TRACE.Println("Server ", r.Pid(), " added log entry with index 0 and term ", appendEntry.LogItm.Term, " and Command type : ",appendEntry.LogItm.Data.Type," Key : ", appendEntry.LogItm.Data.Key)
 							r.AddToLog(appendEntry.LogItm, 0)
 							r.LastIndex = 0
@@ -339,6 +489,7 @@ func (r *RaftImpl) follower() {
 									if err == nil {
 										val,_ := r.db.Get(r.ro, []byte(r.log[0].Data.Key))
 										r.TRACE.Println("Put successful	of the key ",r.log[0].Data.Key," and inserted value is : ",string(val))
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 									} else {
 										r.TRACE.Println("Put unsuccessful	")
 									}
@@ -368,12 +519,21 @@ func (r *RaftImpl) follower() {
 							//response.MatchTerm = appendEntry.PrevLogTerm
 							r.AddToLog(appendEntry.LogItm, appendEntry.PrevLogIndex+1)
 							r.LastIndex = r.LastIndex + 1
+<<<<<<< HEAD
+							r.TRACE.Println("Server ", r.Pid(), " added log entry with index ", (appendEntry.PrevLogIndex + 1), " and term ", appendEntry.LogItm.Term, " and Command type : ", appendEntry.LogItm.Data.Type, " Key : ", appendEntry.LogItm.Data.Key, " LastIndex is :", r.LastIndex, " length is : ", len(r.log), " lastapplied is ", r.lastApplied)
+						} else {
+							r.log = r.log[:(appendEntry.PrevLogIndex + 1)]
+							r.RemoveNextEntries(int32(appendEntry.PrevLogIndex + 1))
+							r.LastIndex = appendEntry.PrevLogIndex
+							r.TRACE.Println("length of log is adjusted to ", len(r.log), " lastindex is ", r.LastIndex)
+=======
 							r.TRACE.Println("Server ", r.Pid(), " added log entry with index ", (appendEntry.PrevLogIndex + 1), " and term ", appendEntry.LogItm.Term, " and Command type : ",appendEntry.LogItm.Data.Type," Key : ", appendEntry.LogItm.Data.Key," LastIndex is :",r.LastIndex," length is : ",len(r.log)," lastapplied is ",r.lastApplied)
 						} else {
 							r.log = r.log[:(appendEntry.PrevLogIndex+1)]
 							r.RemoveNextEntries(int32(appendEntry.PrevLogIndex+1))
 							r.LastIndex = appendEntry.PrevLogIndex
 							r.TRACE.Println("length of log is adjusted to ",len(r.log)," lastindex is ",r.LastIndex)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 						}
 					} else {
 						response = new(clust.Response)
@@ -389,24 +549,42 @@ func (r *RaftImpl) follower() {
 					r.TRACE.Println("Received heartbeat message ")
 				}
 				if msg.LeaderCommit >= r.LastIndex && r.lastApplied < r.LastIndex {
+<<<<<<< HEAD
+					r.TRACE.Println("Apply: Length of log: ", len(r.log), " LastIndex: ", r.LastIndex, " LastApplied: ", r.lastApplied)
+					for i := r.lastApplied + 1; i <= r.LastIndex; i++ {
+=======
 					r.TRACE.Println("Apply: Length of log: ",len(r.log)," LastIndex: ",r.LastIndex," LastApplied: ",r.lastApplied)
 					for i := r.lastApplied + 1 ; i<= r.LastIndex ; i++ {
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 						r.Outbox() <- r.log[i]
 						r.lastApplied = i
 					}
 				}
 				mutex.Lock()
+<<<<<<< HEAD
+				r.TRACE.Println("Log for server ", r.Pid(), " lastApplied ", r.lastApplied, " lastindex : ", r.LastIndex, " commitindex ", r.commitIndex)
+				for i := range r.log {
+					if r.log[i].Data.Type == PUT {
+						r.TRACE.Println("log@", r.Pid(), " : Index :", i, " Term :", r.log[i].Term, " Command : PUT(", r.log[i].Data.Key, ",", r.log[i].Data.Value, ")")
+					} else if r.log[i].Data.Type == DELETE {
+						r.TRACE.Println("log@", r.Pid(), " : Index :", i, " Term :", r.log[i].Term, " Command : DELETE(", r.log[i].Data.Key, ")")
+=======
 				r.TRACE.Println("Log for server ", r.Pid()," lastApplied ",r.lastApplied," lastindex : ",r.LastIndex," commitindex ",r.commitIndex)
 				for i := range r.log {
 					if r.log[i].Data.Type == PUT {
 						r.TRACE.Println("log@", r.Pid(), " : Index :", i, " Term :", r.log[i].Term, " Command : PUT(", r.log[i].Data.Key,",",r.log[i].Data.Value,")")
 					} else if r.log[i].Data.Type == DELETE {
 						r.TRACE.Println("log@", r.Pid(), " : Index :", i, " Term :", r.log[i].Term, " Command : DELETE(", r.log[i].Data.Key,")")			
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 					}
 				}
 				mutex.Unlock()
 				r.changeTerm(msg.TermId)
+<<<<<<< HEAD
 				r.timer.Reset(time.Duration(r.timeout) * time.Millisecond)
+=======
+				r.timer.Reset(time.Duration(r.timeout) * time.Second)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 			}
 		case <-r.timer.C:
 			r.TRACE.Println("Timeout in follower state:: Server ", r.Pid())
@@ -427,6 +605,7 @@ func (r *RaftImpl) candidate() {
 	msg.Pid = -1
 	msg.TermId = r.Term()
 	msg.MsgType = REQUESTVOTE
+<<<<<<< HEAD
 	appendEntry := new(clust.AppendEntry)
 	appendEntry.PrevLogIndex = r.LastIndex
 	appendEntry.PrevLogTerm = r.log[r.LastIndex].Term
@@ -434,8 +613,15 @@ func (r *RaftImpl) candidate() {
 	r.TRACE.Println("Server ", r.Pid(), " broadcasting RequestVote message with msgType ", msg.MsgType)
 	r.server.Outbox() <- msg
 	//Reset election timeout
-	r.timeout = clust.Random(450,700)
+	r.timeout = clust.Random(450, 700)
 	r.timer.Reset(time.Duration(r.timeout) * time.Millisecond)
+=======
+	r.TRACE.Println("Server ", r.Pid(), " broadcasting RequestVote message with msgType ", msg.MsgType)
+	r.server.Outbox() <- msg
+	//Reset election timeout
+	r.timeout = clust.Random(5, 30)
+	r.timer.Reset(time.Duration(r.timeout) * time.Second)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	r.TRACE.Println("Server ::Candidate State::", r.Pid(), " timeout reset to : ", r.timeout)
 	r.noOfVotes = 1
 	r.leaderPid = -1
@@ -455,7 +641,11 @@ func (r *RaftImpl) candidate() {
 					return
 				}
 			case msg.MsgType == REQUESTVOTE:
-				if msg.TermId > r.term && (msg.Msg.PrevLogTerm > r.log[r.LastIndex].Term || (msg.Msg.PrevLogTerm == r.log[r.LastIndex].Term && msg.Msg.PrevLogIndex >= r.LastIndex)){
+<<<<<<< HEAD
+				if msg.TermId > r.term && (msg.Msg.PrevLogTerm > r.log[r.LastIndex].Term || (msg.Msg.PrevLogTerm == r.log[r.LastIndex].Term && msg.Msg.PrevLogIndex >= r.LastIndex)) {
+=======
+				if msg.TermId > r.term {
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 					r.changeTerm(msg.TermId)
 					okMsg := new(clust.Envelope)
 					okMsg.Pid = msg.Pid
@@ -464,12 +654,19 @@ func (r *RaftImpl) candidate() {
 					r.server.Outbox() <- okMsg
 					go r.follower()
 					return
+<<<<<<< HEAD
 				} else if msg.TermId > r.term {
 					r.changeTerm(msg.TermId)
 				}
 			case msg.MsgType == APEENDENTRIES:
 				if msg.TermId > r.term {
+					r.TRACE.Println("Server ", r.Pid(), " with term ", r.Term(), " received AppendEntries from ", msg.Pid, " with term ", msg.TermId, " msg is ", msg.Msg, " Complete msg is ", msg, " Leadercommit is ", msg.LeaderCommit)
+=======
+				}
+			case msg.MsgType == APEENDENTRIES:
+				if msg.TermId > r.term {
 					r.TRACE.Println("Server ", r.Pid(), " with term ", r.Term(), " received AppendEntries from ", msg.Pid, " with term ", msg.TermId, " msg is ", msg.Msg, " Complete msg is ", msg," Leadercommit is ",msg.LeaderCommit)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 					r.commitIndex = msg.LeaderCommit
 					r.leaderPid = msg.Pid
 					if msg.Msg != nil {
@@ -485,6 +682,19 @@ func (r *RaftImpl) candidate() {
 							response.Success = true
 							//Append Entry
 							if appendEntry.LogItm != nil {
+<<<<<<< HEAD
+								r.TRACE.Println("Server ", r.Pid(), " added log entry with index 0 and term ", appendEntry.LogItm.Term, " and Command type : ", appendEntry.LogItm.Data.Type, " Key : ", appendEntry.LogItm.Data.Key)
+								r.AddToLog(appendEntry.LogItm, 0)
+								r.LastIndex = 0
+								if msg.LeaderCommit >= r.LastIndex && r.lastApplied == -1 {
+									// Apply commands from log to the state machine
+									r.TRACE.Println("Apply commands from log to the state machine")
+									if r.log[0].Data.Type == PUT {
+										err := r.db.Put(r.wo, []byte(r.log[0].Data.Key), []byte(r.log[0].Data.Value))
+										if err == nil {
+											val, _ := r.db.Get(r.ro, []byte(r.log[0].Data.Key))
+											r.TRACE.Println("Put successful	of the key ", r.log[0].Data.Key, " and inserted value is : ", string(val))
+=======
 								r.TRACE.Println("Server ", r.Pid(), " added log entry with index 0 and term ", appendEntry.LogItm.Term, " and Command type : ",appendEntry.LogItm.Data.Type," Key : ", appendEntry.LogItm.Data.Key)
 								r.AddToLog(appendEntry.LogItm, 0)
 								r.LastIndex = 0
@@ -496,6 +706,7 @@ func (r *RaftImpl) candidate() {
 										if err == nil {
 											val,_ := r.db.Get(r.ro, []byte(r.log[0].Data.Key))
 											r.TRACE.Println("Put successful	of the key ",r.log[0].Data.Key," and inserted value is : ",string(val))
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 										} else {
 											r.TRACE.Println("Put unsuccessful	")
 										}
@@ -525,12 +736,21 @@ func (r *RaftImpl) candidate() {
 								//response.MatchTerm = appendEntry.PrevLogTerm
 								r.AddToLog(appendEntry.LogItm, appendEntry.PrevLogIndex+1)
 								r.LastIndex = r.LastIndex + 1
+<<<<<<< HEAD
+								r.TRACE.Println("Server ", r.Pid(), " added log entry with index ", (appendEntry.PrevLogIndex + 1), " and term ", appendEntry.LogItm.Term, " and Command type : ", appendEntry.LogItm.Data.Type, " Key : ", appendEntry.LogItm.Data.Key, " LastIndex is :", r.LastIndex, " length is : ", len(r.log), " lastapplied is ", r.lastApplied)
+							} else {
+								r.log = r.log[:(appendEntry.PrevLogIndex + 1)]
+								r.RemoveNextEntries(int32(appendEntry.PrevLogIndex + 1))
+								r.LastIndex = appendEntry.PrevLogIndex
+								r.TRACE.Println("length of log is adjusted to ", len(r.log), " lastindex is ", r.LastIndex)
+=======
 								r.TRACE.Println("Server ", r.Pid(), " added log entry with index ", (appendEntry.PrevLogIndex + 1), " and term ", appendEntry.LogItm.Term, " and Command type : ",appendEntry.LogItm.Data.Type," Key : ", appendEntry.LogItm.Data.Key," LastIndex is :",r.LastIndex," length is : ",len(r.log)," lastapplied is ",r.lastApplied)
 							} else {
 								r.log = r.log[:(appendEntry.PrevLogIndex+1)]
 								r.RemoveNextEntries(int32(appendEntry.PrevLogIndex+1))
 								r.LastIndex = appendEntry.PrevLogIndex
 								r.TRACE.Println("length of log is adjusted to ",len(r.log)," lastindex is ",r.LastIndex)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 							}
 						} else {
 							response = new(clust.Response)
@@ -546,24 +766,42 @@ func (r *RaftImpl) candidate() {
 						r.TRACE.Println("Received heartbeat message ")
 					}
 					if msg.LeaderCommit >= r.LastIndex && r.lastApplied < r.LastIndex {
+<<<<<<< HEAD
+						r.TRACE.Println("Apply: Length of log: ", len(r.log), " LastIndex: ", r.LastIndex, " LastApplied: ", r.lastApplied)
+						for i := r.lastApplied + 1; i <= r.LastIndex; i++ {
+=======
 						r.TRACE.Println("Apply: Length of log: ",len(r.log)," LastIndex: ",r.LastIndex," LastApplied: ",r.lastApplied)
 						for i := r.lastApplied + 1 ; i<= r.LastIndex ; i++ {
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 							r.Outbox() <- r.log[i]
 							r.lastApplied = i
 						}
 					}
 					mutex.Lock()
+<<<<<<< HEAD
+					r.TRACE.Println("Log for server ", r.Pid(), " lastApplied ", r.lastApplied, " lastindex : ", r.LastIndex, " commitindex ", r.commitIndex)
+					for i := range r.log {
+						if r.log[i].Data.Type == PUT {
+							r.TRACE.Println("log@", r.Pid(), " : Index :", i, " Term :", r.log[i].Term, " Command : PUT(", r.log[i].Data.Key, ",", r.log[i].Data.Value, ")")
+						} else if r.log[i].Data.Type == DELETE {
+							r.TRACE.Println("log@", r.Pid(), " : Index :", i, " Term :", r.log[i].Term, " Command : DELETE(", r.log[i].Data.Key, ")")
+=======
 					r.TRACE.Println("Log for server ", r.Pid()," lastApplied ",r.lastApplied," lastindex : ",r.LastIndex," commitindex ",r.commitIndex)
 					for i := range r.log {
 						if r.log[i].Data.Type == PUT {
 							r.TRACE.Println("log@", r.Pid(), " : Index :", i, " Term :", r.log[i].Term, " Command : PUT(", r.log[i].Data.Key,",",r.log[i].Data.Value,")")
 						} else if r.log[i].Data.Type == DELETE {
 							r.TRACE.Println("log@", r.Pid(), " : Index :", i, " Term :", r.log[i].Term, " Command : DELETE(", r.log[i].Data.Key,")")			
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 						}
 					}
 					mutex.Unlock()
 					r.changeTerm(msg.TermId)
+<<<<<<< HEAD
 					r.timer.Reset(time.Duration(r.timeout) * time.Millisecond)
+=======
+					r.timer.Reset(time.Duration(r.timeout) * time.Second)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 					go r.follower()
 					return
 				}
@@ -596,7 +834,11 @@ func (r *RaftImpl) leader() {
 		r.TRACE.Println("nextId[", id, "] = ", nextIndex[id], " matchIndex[", id, "] = ", matchIndex[id])
 	}
 
+<<<<<<< HEAD
 	r.timer.Reset(time.Duration(50) * time.Millisecond)
+=======
+	r.timer.Reset(time.Duration(5) * time.Second)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	//r.isLeader = true
 	r.CurrLeader() <- r.Pid()
 	for {
@@ -604,7 +846,10 @@ func (r *RaftImpl) leader() {
 		case msg := <-r.server.Inbox():
 			switch {
 			case msg.MsgType == COMMAND:
+<<<<<<< HEAD
 				r.TRACE.Println("New command received at leader")
+=======
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 				r.Inbox() <- msg.Cmd
 			case msg.MsgType == REQUESTVOTE:
 				if msg.TermId > r.term {
@@ -639,7 +884,11 @@ func (r *RaftImpl) leader() {
 							}
 						}
 					}
+<<<<<<< HEAD
+
+=======
 					
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 				} else {
 					if response.MatchIndex == nextIndex[msg.Pid]-1 {
 						nextIndex[msg.Pid] = nextIndex[msg.Pid] - 1
@@ -649,6 +898,15 @@ func (r *RaftImpl) leader() {
 				for id, _ := range r.server.Peers() {
 					r.TRACE.Println("Server id: ", id, " NextIndex : ", nextIndex[id], " matchIndex : ", matchIndex[id])
 				}
+<<<<<<< HEAD
+
+				temp := make([]int, 0, 1)
+				for _, v := range matchIndex {
+					temp = append(temp, v)
+				}
+				sort.Sort(sort.IntSlice(temp))
+				if len(temp)%2 == 0 {
+=======
 				
 				
 				temp :=make([]int,0,1)
@@ -657,6 +915,7 @@ func (r *RaftImpl) leader() {
 				}
 				sort.Sort(sort.IntSlice(temp))
 				if len(temp) % 2 == 0 {
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 					r.commitIndex = temp[len(temp)/2-1]
 				} else {
 					r.commitIndex = temp[len(temp)/2]
@@ -667,7 +926,11 @@ func (r *RaftImpl) leader() {
 			logItem := new(clust.LogItem)
 			logItem.Term = r.Term()
 			logItem.Data = cmd
+<<<<<<< HEAD
 			r.AddToLog(logItem, (r.LastIndex + 1))
+=======
+			r.AddToLog(logItem, r.LastIndex)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 			r.LastIndex = r.LastIndex + 1
 			r.TRACE.Println("Server ", r.Pid(), " with term ", r.Term(), " is sending AppendEntries message")
 			for id, _ := range r.server.Peers() {
@@ -684,7 +947,11 @@ func (r *RaftImpl) leader() {
 						appendEntry.PrevLogTerm = 0
 					}
 					if r.LastIndex == matchIndex[id] {
+<<<<<<< HEAD
+						r.TRACE.Println("Sending heartbeat AppendEntry to ", id, " ")
+=======
 						r.TRACE.Println("Sending heartbeat AppendEntry to ", id," ")
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 						appendEntry = nil
 					} else if nextIndex[id] == r.LastIndex+1 {
 						r.TRACE.Println("Sending AppendEntry to ", id, " with nil log item at index ", nextIndex[id])
@@ -715,7 +982,11 @@ func (r *RaftImpl) leader() {
 						appendEntry.PrevLogTerm = 0
 					}
 					if r.LastIndex == matchIndex[id] {
+<<<<<<< HEAD
+						r.TRACE.Println("Sending heartbeat AppendEntry to ", id, " ")
+=======
 						r.TRACE.Println("Sending heartbeat AppendEntry to ", id," ")
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 						appendEntry = nil
 					} else if nextIndex[id] == r.LastIndex+1 {
 						r.TRACE.Println("Sending AppendEntry to ", id, " with nil log item at index ", nextIndex[id])
@@ -730,11 +1001,33 @@ func (r *RaftImpl) leader() {
 					r.server.Outbox() <- msg
 				}
 			}
+<<<<<<< HEAD
 			r.timer.Reset(time.Duration(50) * time.Millisecond)
+=======
+			r.timer.Reset(time.Duration(2) * time.Second)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 		}
 	}
 }
 
+<<<<<<< HEAD
+func (r *RaftImpl) proc_outbox() {
+	for {
+		select {
+		case logitem := <-r.Outbox():
+			if logitem.Data.Type == PUT {
+				err := r.db.Put(r.wo, []byte(logitem.Data.Key), []byte(logitem.Data.Value))
+				if err != nil {
+					r.TRACE.Println("Put command failed PUT(", logitem.Data.Key, ",", logitem.Data.Value, ")")
+				}
+			} else if logitem.Data.Type == DELETE {
+				err := r.db.Delete(r.wo, []byte(logitem.Data.Key))
+				if err != nil {
+					r.TRACE.Println("Delete command failed DELETE(", logitem.Data.Key, ")")
+				}
+			}
+		}
+=======
 func (r	*RaftImpl) proc_outbox() {
 	for {
 		select {
@@ -751,6 +1044,6 @@ func (r	*RaftImpl) proc_outbox() {
 						}
 					}
 		}	
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	}
 }
-

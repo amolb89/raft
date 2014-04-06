@@ -29,6 +29,7 @@ func (s *MockServer) Peers() map[int32]string {
 	return s.server.Peers()
 }
 
+
 func (s *MockServer) Set(id int32, configPath string, DropProb float64, MaxDelay int, exit <-chan int) {
 	s.server = new(Serv)
 	s.server.Set(id, configPath, exit)
@@ -64,6 +65,7 @@ L:
 							msgNew.Msg = msg.Msg
 							msgNew.Resp = msg.Resp
 							msgNew.Cmd = msg.Cmd
+
 							msgNew.TermId = msg.TermId
 							msgNew.MsgType = msg.MsgType
 							//Delay

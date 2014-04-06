@@ -12,13 +12,21 @@ const (
 
 // Message type can be 1-RequestVote 2-Appendentries 3-Ok
 type Envelope struct {
-	Pid     int32
-	MsgType int
-	TermId  int32
+<<<<<<< HEAD
+	Pid          int32
+	MsgType      int
+	TermId       int32
 	LeaderCommit int
+	Msg          *AppendEntry
+	Resp         *Response
+	Cmd          *Command
+=======
+	Pid     int
+	MsgType int
+	TermId  int
 	Msg     *AppendEntry
 	Resp    *Response
-	Cmd 	*Command
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 }
 
 type Response struct {
@@ -27,9 +35,10 @@ type Response struct {
 	Success bool
 }
 
+<<<<<<< HEAD
 type Command struct {
-	Type int
-	Key string
+	Type  int
+	Key   string
 	Value string
 }
 
@@ -37,44 +46,81 @@ type LogItem struct {
 	//Index int
 	Term int32
 	Data *Command
+=======
+type LogItem struct {
+	//Index int
+	Term int
+	Data string
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 }
 
 type AppendEntry struct {
 	PrevLogIndex int
+<<<<<<< HEAD
 	PrevLogTerm  int32
 	LogItm       *LogItem
+=======
+	PrevLogTerm  int
+	LogItm       *LogItem
+	LeaderCommit int //Leader's commit Index
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 }
 
 type Server interface {
 	Pid() int
+<<<<<<< HEAD
 	Peers() map[int32]string
+=======
+	Peers() map[int]string
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	Outbox() chan *Envelope
 	Inbox() chan *Envelope
 }
 
 type Serv struct {
+<<<<<<< HEAD
 	pid       int32
 	peers     map[int32]string
+=======
+	pid       int
+	peers     map[int]string
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	outbox    chan *Envelope
 	inbox     chan *Envelope
 	noOfPeers int
 }
 
+<<<<<<< HEAD
 func (s *Serv) Set(id int32, configPath string, exit <-chan int) {
 	cfig := new(Config)
 	//Load configuration from config file
 	LoadConfig(configPath, cfig)
 	Peers := make(map[int32]string)
+=======
+func (s *Serv) Set(id int, configPath string, exit <-chan int) {
+	cfig := new(Config)
+	//Load configuration from config file
+	LoadConfig(configPath, cfig)
+	Peers := make(map[int]string)
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 
 	//Initialize list of peers
 	s.noOfPeers = 0
 	for servers, _ := range cfig.Servers {
 		key, _ := strconv.Atoi(servers)
+<<<<<<< HEAD
 		if int32(key) != id {
 			Peers[int32(key)] = cfig.Servers[servers]
 			s.noOfPeers++
 		} else {
 			Peers[int32(key)] = cfig.Servers[servers]
+=======
+		if key != id {
+			Peers[key] = cfig.Servers[servers]
+			s.noOfPeers++
+		} else {
+			Peers[key] = cfig.Servers[servers]
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 		}
 	}
 
@@ -93,11 +139,19 @@ func (s *Serv) NoOfPeers() int {
 	return s.noOfPeers
 }
 
+<<<<<<< HEAD
 func (s *Serv) Pid() int32 {
 	return s.pid
 }
 
 func (s *Serv) Peers() map[int32]string {
+=======
+func (s *Serv) Pid() int {
+	return s.pid
+}
+
+func (s *Serv) Peers() map[int]string {
+>>>>>>> ef60646440dd618b0f44ae43c16310844dfe1023
 	return s.peers
 }
 
